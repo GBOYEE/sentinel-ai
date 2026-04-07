@@ -1,44 +1,43 @@
-# Sentinel AI — Intelligent Code Security & Quality Agent
+# Sentinel AI — Autonomous PR Security Reviewer
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue?logo=python&logoColor=white)](https://www.python.org)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)](docker-compose.yml)
-[![CI](https://github.com/GBOYEE/sentinel-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/GBOYEE/sentinel-ai/actions)
-[![Coverage](https://img.shields.io/codecov/c/github/GBOYEE/sentinel-ai)](https://codecov.io/gh/GBOYEE/sentinel-ai)
-
-**AI-powered code security and quality agent for GitHub pull requests.** Sentinel scans your diffs with static analysis + LLM reasoning, posts contextual review comments, and suggests fixes — automatically.
+**Production-grade AI agent that reviews GitHub pull requests for security vulnerabilities and code quality issues.** Sentinel combines static analysis (bandit, flake8, semgrep) with LLM reasoning (OpenRouter/Ollama) to post contextual review comments directly on PRs — like a senior security engineer reviewing every change.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/GBOYEE/sentinel-ai/main/screenshots/pr-review-example.png" alt="Sentinel AI PR review example" width="800"/>
+  <img src="https://raw.githubusercontent.com/GBOYEE/sentinel-ai/main/screenshots/pr-example.png" alt="Sentinel AI PR review" width="800"/>
 </p>
 
-## ✨ Why This Exists
+## 🎯 Why This Exists
 
 Manual code reviews are slow and inconsistent. Traditional security scanners (SonarQube, Snyk) are noisy and lack context. AI coding assistants write code but don't review it.
 
-Sentinel bridges the gap: **PR-level, AI-native code review** that understands your codebase, catches vulnerabilities and quality issues, and suggests fixes — like a senior dev reviewing every pull request.
+**Sentinel bridges the gap:** AI-native, PR-level code review that understands your codebase, catches vulnerabilities and quality issues, and suggests fixes — automatically.
 
-## 🎯 Key Features
+## ✨ Key Features
 
-- 🔒 **Security Scanning** — Detect SQL injection, XSS, auth flaws, path traversal, etc.
-- ⚡ **Code Quality** — Identify code smells, complexity, duplication, naming issues
-- 🧠 **LLM-Powered Reasoning** — Context-aware findings with natural language explanations
-- 🛠️ **Fix Suggestions** — AI generates patches or refactor snippets
-- 📊 **Dashboard** — Streamlit UI for configuration, review history, metrics
-- 🔗 **GitHub Native** — Posts comments directly on PRs (review API)
-- 🐳 **One-Command Deploy** — Docker Compose setup with GitHub App installation
-- 📈 **Continuous Learning** — Vector memory stores past findings to improve over time
+- 🔒 **Security-First Review** — Detects SQL injection, XSS, auth flaws, path traversal, and more
+- ⚡ **Static Analysis Pipeline** — bandit (security), flake8 (quality), semgrep (patterns)
+- 🧠 **LLM-Powered Reasoning** — OpenRouter (Claude/GPT-4o) or Ollama for contextual, natural language explanations
+- 🛠️ **Fix Suggestions** — AI generates patches or code snippets to resolve issues
+- 📊 **Live Dashboard** — Streamlit UI for configuration, review history, metrics
+- 🔗 **GitHub Native** — Posts comments directly on PRs using GitHub Review API
+- 🐳 **One-Command Deploy** — Docker Compose with GitHub App integration
+- 📈 **Continuous Learning** — Vector memory (ChromaDB) stores past findings to improve over time
 
-## 🚀 Quick Start (5 minutes)
+## 🚀 Quick Start (5 Minutes)
 
 ### 1. Create a GitHub App
-Go to GitHub → Settings → Developer settings → GitHub Apps → New GitHub App:
-- Name: `Sentinel AI`
-- Webhook URL: `https://your-domain.com/webhook`
-- Permissions: Pull requests (Read & Write), Contents (Read), Metadata (Read)
-- Subscribe to: Pull request events
 
-Copy the App ID, Private Key, and Webhook secret.
+1. Go to **GitHub → Settings → Developer settings → GitHub Apps → New GitHub App**
+2. Configure:
+   - **GitHub App name:** `Sentinel AI`
+   - **Webhook URL:** `https://your-domain.com/webhook` (use ngrok for local: `https://<random>.ngrok.io`)
+   - **Repository permissions:**
+     - Pull requests: **Read & Write**
+     - Contents: **Read**
+     - Metadata: **Read**
+   - **Subscribe to events:** Pull request
+3. Generate a **private key** and download it
+4. Note the **App ID** and **Webhook secret** (you'll need these)
 
 ### 2. Deploy Sentinel
 
@@ -46,15 +45,24 @@ Copy the App ID, Private Key, and Webhook secret.
 git clone https://github.com/GBOYEE/sentinel-ai.git
 cd sentinel-ai
 cp .env.example .env
-# Edit .env with your GH_APP_ID, GH_APP_PRIVATE_KEY, GH_WEBHOOK_SECRET
+# Edit .env with:
+# GH_APP_ID=<your_app_id>
+# GH_WEBHOOK_SECRET=<your_webhook_secret>
+# Place private key at secrets/gh_private_key.pem
 docker compose up -d
 ```
 
 ### 3. Install the App
-Visit the generated installation URL (or use GitHub App installation flow) and install on your target repositories.
+
+Install your GitHub App on the target repository (or organization). Sentinel will automatically start reviewing PRs.
 
 ### 4. See the Magic
-Open a PR — Sentinel will automatically post a review with findings and suggested fixes.
+
+Open a pull request. Within ~60 seconds, Sentinel posts a review comment with security and quality findings, plus suggested fixes.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/GBOYEE/sentinel-ai/main/screenshots/review-comment.png" alt="Example review comment" width="700"/>
+</p>
 
 ## 🏗️ Architecture
 
@@ -73,13 +81,13 @@ flowchart TD
 ```
 
 **Components:**
-- **FastAPI webhook receiver** — handles GitHub PR events
-- **Planner agent** — orchestrates review steps (static analysis → LLM → aggregate)
-- **Static analyzers** — bandit, flake8, semgrep for baseline issues
-- **LLM reviewer** — OpenRouter/OpenAI for context-aware review
+- **FastAPI webhook receiver** — Handles GitHub PR events with signature verification
+- **Planner agent** — Orchestrates review steps (static analysis → LLM → aggregate)
+- **Static analyzers** — bandit (security), flake8 (quality), semgrep (patterns)
+- **LLM reviewer** — OpenRouter or Ollama for context-aware review with fix generation
 - **Vector memory** — ChromaDB for learning from past findings
-- **PR poster** — Creates GitHub review comments with fix suggestions
-- **Streamlit dashboard** — Configure settings, view history, metrics
+- **PR commenter** — Creates GitHub review comments with severity labels and suggestions
+- **Streamlit dashboard** — Configuration, review history, metrics, and settings
 
 See [docs/architecture.md](docs/architecture.md) for detailed design.
 
@@ -95,18 +103,18 @@ See [docs/architecture.md](docs/architecture.md) for detailed design.
 | Frontend | Streamlit (dashboard) |
 | Deployment | Docker Compose, GitHub App |
 | Database | PostgreSQL (optional for multi-tenant) |
+| Cache | Redis (optional) |
 
 ## 🧪 Testing & CI
 
 ```bash
 # Install deps
-pip install -e .[dev]
+pip install -r requirements.txt
 
 # Run tests
 pytest tests/ -v --cov=sentinel_ai
 
 # Lint and type-check
-black sentinel_ai/
 ruff sentinel_ai/
 mypy sentinel_ai/
 ```
@@ -115,11 +123,11 @@ CI runs on every push: lint, type-check, tests, coverage upload.
 
 ## 📚 Documentation
 
-- [Getting Started](docs/README.md)
-- [GitHub App Setup](docs/github-app-setup.md)
-- [Configuration](docs/configuration.md)
-- [API Reference](docs/api.md)
-- [Contributing](CONTRIBUTING.md)
+- [Getting Started](docs/README.md) — Full setup walkthrough
+- [GitHub App Setup](docs/github-app-setup.md) — Detailed App creation steps
+- [Configuration](docs/configuration.md) — All environment variables
+- [API Reference](docs/api.md) — Webhook and internal endpoints
+- [Contributing](CONTRIBUTING.md) — We welcome contributors!
 
 ## 🎯 Roadmap
 
@@ -131,6 +139,7 @@ CI runs on every push: lint, type-check, tests, coverage upload.
 - [ ] Auto-fix via PR bot comments (apply patch button)
 - [ ] Self-hosted LLM option (no data leaves network)
 - [ ] Enterprise SaaS offering
+- [ ] SCM integrations (GitLab, Bitbucket)
 
 ## 🤝 Contributing
 
@@ -151,3 +160,7 @@ Built by <a href="https://github.com/GBOYEE">Oyebanji Adegboyega</a> •
 <a href="https://gboyee.github.io">Portfolio</a> • 
 <a href="https://twitter.com/Gboyee_0">@Gboyee_0</a>
 </p>
+
+---
+
+**Positioning:** *"Autonomous AI security reviewer for GitHub PRs — catch vulnerabilities before they ship."*
