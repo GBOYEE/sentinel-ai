@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+sentinel.db
+chroma_data/
+data/
+secrets/
+.env
+*.log
+coverage.xml
+htmlcov/
+.DS_Store

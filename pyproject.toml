@@ -1,0 +1,3 @@
+--strict
+--line-length=88
+--ignore=F401

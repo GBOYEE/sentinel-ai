@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: uvicorn sentinel_ai.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      - GH_APP_ID=${GH_APP_ID}
+      - GH_APP_PRIVATE_KEY=/run/secrets/gh_private_key.pem
+      - GH_WEBHOOK_SECRET=${GH_WEBHOOK_SECRET}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/sentinel
+      - REDIS_URL=redis://redis:6379/0
+      - CHROMA_PERSIST_DIR=/data/chroma
+    volumes:
+      - chroma_data:/data/chroma
+    secrets:
+      - gh_private_key.pem
+    depends_on:
+      - db
+      - redis
+    networks:
+      - sentinel
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sentinel
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sentinel
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - sentinel
+
+  dashboard:
+    build: .
+    command: streamlit run dashboard.py --server.address 0.0.0.0 --server.port 8501
+    ports:
+      - "8501:8501"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/sentinel
+    depends_on:
+      - db
+      - redis
+    networks:
+      - sentinel
+
+volumes:
+  postgres_data:
+  chroma_data:
+
+networks:
+  sentinel:
+
+secrets:
+  gh_private_key.pem:
+    file: ./secrets/gh_private_key.pem
