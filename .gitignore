@@ -1,17 +1,45 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-env/
-venv/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual env
 .venv/
-sentinel.db
-chroma_data/
-data/
-secrets/
+venv/
+env/
+
+# Environment
 .env
-*.log
-coverage.xml
-htmlcov/
+.env.local
+.env.*.local
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Chroma
+chroma_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Docker
+docker-compose.override.yml
