@@ -18,7 +18,7 @@ def create_jwt() -> str:
     payload = {
         "iat": now - 60,
         "exp": now + (10 * 60),
-        "iss": GH_APP_ID,
+        "iss": str(GH_APP_ID),
     }
     try:
         with open(GH_APP_PRIVATE_KEY, "r") as f:

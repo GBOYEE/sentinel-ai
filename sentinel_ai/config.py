@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # GitHub App credentials
-GH_APP_ID = int(os.getenv("GH_APP_ID", "0"))
+GH_APP_ID = os.getenv("GH_APP_ID", "0")
 GH_APP_PRIVATE_KEY = os.getenv("GH_APP_PRIVATE_KEY", "")
 GH_WEBHOOK_SECRET = os.getenv("GH_WEBHOOK_SECRET", "")
 GH_REPO_MAP = os.getenv("GH_REPO_MAP", "")
