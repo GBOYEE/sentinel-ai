@@ -42,7 +42,7 @@ memory = [
 ]
 dashboard = [
     "streamlit>=1.33.0",
-    "plotly>=5.19.0",
+    "plotly>=6.7.0",
     "pandas>=2.2.0",
 ]
 all = [
