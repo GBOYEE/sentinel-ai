@@ -34,7 +34,7 @@ dev = [
 scanners = [
     "bandit>=1.7.0",
     "flake8>=6.1.0",
-    "semgrep>=1.60.0",
+    "semgrep>=1.163.0",
 ]
 memory = [
     "chromadb>=0.4.22",
