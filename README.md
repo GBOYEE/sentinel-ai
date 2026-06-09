@@ -1,79 +1,103 @@
-# 🛡️ Sentinel AI — PR Security & Quality Reviewer
+<div align="center">
 
-**AI-powered automated code review for every pull request.**
+# 🛡️ Sentinel AI
 
-Sentinel AI combines static analysis (bandit, flake8, semgrep) with LLM reasoning to catch security vulnerabilities, code quality issues, and best practice violations — automatically on every PR.
+**AI-Powered Automated Code Review for GitHub**
 
-## Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![GitHub App](https://img.shields.io/badge/GitHub-App-181717?logo=github&logoColor=white)](https://github.com/settings/apps)
 
-- **Multi-scanner pipeline** — bandit (security), flake8 (quality), semgrep (patterns)
-- **AI reasoning** — LLM explains *why* something is a problem and *how* to fix it
-- **Inline review comments** — findings appear as line-level comments on the PR, not a wall of text
-- **Smart severity** — critical/high findings request changes, medium/low are comments
-- **Dashboard** — Streamlit UI for monitoring all reviews and findings
-- **Zero config** — works out of the box on any Python repo
+*Catch security vulnerabilities, code quality issues, and bad practices — automatically on every pull request.*
 
-## How It Works
+[Install Free](https://github.com/marketplace/sentinel-ai) · [Documentation](#-quick-start) · [Report Bug](https://github.com/GBOYEE/sentinel-ai/issues)
 
-1. Install the GitHub App on your repos
-2. Open or update a PR
-3. Sentinel AI scans all changed files
-4. Findings appear as inline review comments within seconds
-5. Critical/high issues block merge (request changes), medium/low are advisory
+</div>
 
-## Installation
+---
 
-### From GitHub Marketplace
+## ✨ How It Works
 
-1. Visit [Sentinel AI on GitHub Marketplace](https://github.com/marketplace/sentinel-ai)
+```
+Open PR → Sentinel AI scans → Inline comments appear in seconds
+```
+
+<div align="center">
+
+| 🔍 Scans | 💬 Reviews | 🛡️ Catches |
+|----------|-----------|-----------|
+| bandit, flake8, semgrep + LLM | Inline PR comments on specific lines | SQL injection, XSS, hardcoded secrets, eval misuse, command injection, 50+ patterns |
+
+</div>
+
+## 🚀 Quick Start
+
+### Install from GitHub Marketplace (recommended)
+
+1. Go to [GitHub Marketplace](https://github.com/marketplace/sentinel-ai)
 2. Click **Install**
-3. Select repositories (or all repos)
-4. Done — open a PR and watch it work
+3. Select repositories
+4. Open a PR — Sentinel AI reviews automatically!
 
 ### Self-Hosted
 
 ```bash
-# Clone and install
 git clone https://github.com/GBOYEE/sentinel-ai.git
 cd sentinel-ai
 pip install -e ".[scanners]"
-
-# Configure
 cp .env.example .env
 # Edit .env with your GitHub App credentials
-
-# Run
 uvicorn sentinel_ai.main:app --host 0.0.0.0 --port 8000
 ```
 
-## Configuration
+### Configure
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GH_APP_ID` | Yes | GitHub App ID |
-| `GH_APP_PRIVATE_KEY` | Yes | Path to private key PEM file |
-| `GH_WEBHOOK_SECRET` | Yes | Webhook secret |
-| `OPENROUTER_API_KEY` | No | OpenRouter API key (for LLM review) |
-| `OPENROUTER_MODEL` | No | Model (default: `openai/gpt-4o-mini`) |
-| `ENABLE_STATIC_ANALYSIS` | No | Enable bandit/flake8/semgrep (default: true) |
-| `ENABLE_LLM_REVIEW` | No | Enable LLM review (default: true) |
-| `DATABASE_URL` | No | Database (default: SQLite) |
+Create a [GitHub App](https://github.com/settings/apps/new) with:
+- **Webhook URL**: `https://your-server.com/webhook`
+- **Permissions**: Pull Requests (Read & Write), Contents (Read), Issues (Read & Write)
+- **Events**: Pull request
 
-## Pricing
+```env
+GH_APP_ID=123456
+GH_APP_PRIVATE_KEY=/path/to/private-key.pem
+GH_WEBHOOK_SECRET=your-secret
+OPENROUTER_API_KEY=sk-or-...
+```
+
+## 📋 Pricing
 
 | Plan | Price | Features |
-|------|-------|----------|
-| **Free** | $0 | Static analysis only (bandit + flake8), 10 repos |
-| **Pro** | $9/repo/mo | + LLM reasoning, unlimited repos, dashboard |
-| **Team** | $29/repo/mo | + Priority support, custom rules, Slack integration |
+|------|-------|---------|
+| **Free** | $0 | Static analysis (bandit + flake8), up to 5 repos |
+| **Pro** | $9/repo/mo | + LLM reasoning, unlimited repos, all languages |
+| **Team** | $29/repo/mo | + Custom rules, Slack, SSO, priority support |
 
-## Supported Languages
+## 🧠 What It Catches
 
-- Python (full: bandit + flake8 + semgrep + LLM)
-- JavaScript/TypeScript (LLM review)
-- Go, Rust, Java, Ruby (LLM review)
+### Security
+- SQL injection, XSS, CSRF
+- Command injection (`os.system`, `subprocess.shell=True`)
+- Hardcoded secrets (API keys, passwords)
+- `eval()` / `exec()` on user input
+- Path traversal, SSRF
+- Insecure deserialization
 
-## Architecture
+### Code Quality
+- Bare except blocks
+- Unused imports / variables
+- Missing type hints
+- Functions too complex
+- Missing error handling
+- Debug mode left on
+
+### Best Practices
+- No input validation
+- Missing documentation
+- Hardcoded config values
+- Wrong crypto algorithms
+
+## 🏗️ Architecture
 
 ```
 GitHub PR → Webhook → FastAPI → Scanner Pipeline → LLM Review → Inline Comments
@@ -83,19 +107,50 @@ GitHub PR → Webhook → FastAPI → Scanner Pipeline → LLM Review → Inline
                               Streamlit Dashboard
 ```
 
-## Development
+**Scanner Pipeline:**
+1. **bandit** — Python security analysis
+2. **flake8** — Code style & quality
+3. **semgrep** — Pattern-based multi-language analysis
+4. **LLM Review** — AI reasoning explains *why* and *how to fix*
+
+## 📊 Supported Languages
+
+| Language | Static Analysis | LLM Review |
+|----------|----------------|------------|
+| Python | ✅ Full | ✅ |
+| JavaScript | ⚡ semgrep | ✅ |
+| TypeScript | ⚡ semgrep | ✅ |
+| Go | ⚡ semgrep | ✅ |
+| Rust | ⚡ semgrep | ✅ |
+| Java | ⚡ semgrep | ✅ |
+| Ruby | ⚡ semgrep | ✅ |
+
+## 🧪 Development
 
 ```bash
 # Run tests
 pytest tests/ -v
 
+# Run locally with auto-reload
+uvicorn sentinel_ai.main:app --reload
+
 # Run dashboard
 streamlit run dashboard.py
-
-# Run locally
-uvicorn sentinel_ai.main:app --reload
 ```
 
-## License
+## 📝 API Reference
 
-MIT
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Service info |
+| `/health` | GET | Health check |
+| `/webhook` | POST | GitHub webhook receiver |
+| `/review` | POST | Manual review trigger |
+
+## 🤝 Contributing
+
+Issues and PRs welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## 📄 License
+
+MIT © 2026 [XAMDERCORP](https://github.com/XAMDERCORP)
