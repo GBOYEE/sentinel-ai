@@ -153,4 +153,4 @@ Issues and PRs welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📄 License
 
-MIT © 2026 [XAMDERCORP](https://github.com/XAMDERCORP)
+MIT © 2026 [XANDERCORP](https://github.com/XANDERCORP)
