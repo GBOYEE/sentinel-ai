@@ -1,8 +1,8 @@
 """GitHub App authentication utilities."""
 
-import time
 import logging
-from typing import Optional
+import time
+
 import httpx
 import jwt
 from cryptography.hazmat.primitives import serialization
@@ -21,7 +21,7 @@ def create_jwt() -> str:
         "iss": str(GH_APP_ID),
     }
     try:
-        with open(GH_APP_PRIVATE_KEY, "r") as f:
+        with open(GH_APP_PRIVATE_KEY) as f:
             private_key_data = f.read()
         private_key = serialization.load_pem_private_key(
             private_key_data.encode(), password=None
@@ -40,9 +40,9 @@ def create_jwt() -> str:
         raise
 
 
-async def get_installation_token(installation_id: int) -> Optional[str]:
+async def get_installation_token(installation_id: int) -> str | None:
     """Exchange JWT for an installation access token.
-    
+
     This is the critical step: the JWT identifies the app,
     but the installation token is needed to act on behalf of
     a specific organization/user who installed the app.
@@ -54,7 +54,7 @@ async def get_installation_token(installation_id: int) -> Optional[str]:
         "X-GitHub-Api-Version": "2022-11-28",
     }
     url = f"https://api.github.com/app/installations/{installation_id}/access_tokens"
-    
+
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.post(url, headers=headers, timeout=30)
@@ -70,7 +70,7 @@ async def get_installation_token(installation_id: int) -> Optional[str]:
         return None
 
 
-async def get_installation_id(owner: str, repo: str) -> Optional[int]:
+async def get_installation_id(owner: str, repo: str) -> int | None:
     """Get the installation ID for a given repo."""
     jwt_token = create_jwt()
     headers = {
@@ -79,7 +79,7 @@ async def get_installation_id(owner: str, repo: str) -> Optional[int]:
         "X-GitHub-Api-Version": "2022-11-28",
     }
     url = f"https://api.github.com/repos/{owner}/{repo}/installation"
-    
+
     try:
         async with httpx.AsyncClient() as client:
             resp = await client.get(url, headers=headers, timeout=30)
@@ -95,8 +95,8 @@ async def get_installation_id(owner: str, repo: str) -> Optional[int]:
 
 def verify_webhook_signature(payload: bytes, signature: str) -> bool:
     """Verify GitHub webhook signature (HMAC SHA256)."""
-    import hmac
     import hashlib
+    import hmac
 
     if not GH_WEBHOOK_SECRET:
         logger.warning("GH_WEBHOOK_SECRET not set, skipping verification")

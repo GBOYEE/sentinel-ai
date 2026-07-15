@@ -1,15 +1,19 @@
 """Tests for Sentinel AI models and database."""
 
 import os
+
 import pytest
-from datetime import datetime
 
 # Use SQLite for testing
 os.environ["DATABASE_URL"] = "sqlite:///./test_sentinel.db"
 
 from sentinel_ai.models import (
-    init_db, create_review, add_finding, complete_review,
-    get_recent_reviews, get_review_stats, Review, Finding
+    add_finding,
+    complete_review,
+    create_review,
+    get_recent_reviews,
+    get_review_stats,
+    init_db,
 )
 
 
@@ -54,9 +58,9 @@ class TestDatabaseModels:
         review = create_review("testowner", "testrepo", 1, "abc123")
         add_finding(review.id, "app.py", 10, "high", "security", "SQL injection", "Use params", "bandit")
         add_finding(review.id, "app.py", 20, "medium", "quality", "Unused import", "Remove it", "flake8")
-        
+
         complete_review(review.id)
-        
+
         # Re-fetch to check
         reviews = get_recent_reviews(10)
         assert len(reviews) > 0
@@ -67,7 +71,7 @@ class TestDatabaseModels:
     def test_get_recent_reviews(self):
         for i in range(3):
             create_review("owner", f"repo{i}", i, f"sha{i}")
-        
+
         reviews = get_recent_reviews(10)
         assert len(reviews) >= 3
 
@@ -75,7 +79,7 @@ class TestDatabaseModels:
         review = create_review("testowner", "testrepo", 1, "abc123")
         add_finding(review.id, "app.py", 10, "critical", "security", "RCE", "Fix it", "bandit")
         complete_review(review.id)
-        
+
         stats = get_review_stats()
         assert stats["total_reviews"] >= 1
         assert stats["total_findings"] >= 1

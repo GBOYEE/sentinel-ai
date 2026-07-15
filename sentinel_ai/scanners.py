@@ -1,12 +1,20 @@
 """Static code analysis tools."""
 
+import json
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
-def run_bandit(code: str) -> List[Dict[str, Any]]:
-    """Run bandit security scanner on Python code."""
+
+def run_bandit(code: str) -> list[dict[str, Any]]:
+    """Run bandit security scanner on Python code.
+
+    Returns [] if bandit is not installed (so callers can degrade gracefully).
+    """
+    if not shutil.which("bandit"):
+        return []
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(code)
         f.flush()
@@ -18,7 +26,6 @@ def run_bandit(code: str) -> List[Dict[str, Any]]:
                 timeout=30,
             )
             # Parse JSON output
-            import json
             output = json.loads(result.stdout) if result.stdout else {"results": []}
             findings = []
             for item in output.get("results", []):
@@ -28,16 +35,21 @@ def run_bandit(code: str) -> List[Dict[str, Any]]:
                     "line": item.get("line_number", 0),
                     "message": item.get("issue_text", ""),
                     "code": item.get("code", ""),
+                    "test_id": item.get("test_id", ""),
                 })
             return findings
+        except json.JSONDecodeError:
+            return []
         except Exception as e:
             return [{"tool": "bandit", "severity": "error", "message": str(e)}]
         finally:
             Path(f.name).unlink(missing_ok=True)
 
 
-def run_flake8(code: str) -> List[Dict[str, Any]]:
-    """Run flake8 for code quality issues."""
+def run_flake8(code: str) -> list[dict[str, Any]]:
+    """Run flake8 for code quality issues. Returns [] if flake8 not installed."""
+    if not shutil.which("flake8"):
+        return []
     with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
         f.write(code)
         f.flush()
@@ -48,7 +60,6 @@ def run_flake8(code: str) -> List[Dict[str, Any]]:
                 text=True,
                 timeout=30,
             )
-            import json
             output = json.loads(result.stdout) if result.stdout else []
             findings = []
             for item in output:
@@ -60,13 +71,15 @@ def run_flake8(code: str) -> List[Dict[str, Any]]:
                     "code": "",
                 })
             return findings
+        except json.JSONDecodeError:
+            return []
         except Exception as e:
             return [{"tool": "flake8", "severity": "error", "message": str(e)}]
         finally:
             Path(f.name).unlink(missing_ok=True)
 
 
-def run_semgrep(code: str) -> List[Dict[str, Any]]:
+def run_semgrep(code: str) -> list[dict[str, Any]]:
     """Run semgrep for pattern-based security scanning (if available)."""
     try:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
@@ -78,7 +91,6 @@ def run_semgrep(code: str) -> List[Dict[str, Any]]:
                 text=True,
                 timeout=30,
             )
-            import json
             output = json.loads(result.stdout) if result.stdout else {"results": []}
             findings = []
             for item in output.get("results", []):
@@ -98,7 +110,7 @@ def run_semgrep(code: str) -> List[Dict[str, Any]]:
         Path(f.name).unlink(missing_ok=True)
 
 
-def scan_file(code: str, filename: str = "code.py") -> List[Dict[str, Any]]:
+def scan_file(code: str, filename: str = "code.py") -> list[dict[str, Any]]:
     """Run all static analyzers on a code snippet."""
     all_findings = []
     if filename.endswith(".py"):

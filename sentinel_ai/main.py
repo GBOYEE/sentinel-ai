@@ -1,17 +1,21 @@
 """Main FastAPI application for Sentinel AI."""
 
-import os
 import json
 import logging
-from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
+from typing import Any
+
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from sentinel_ai.config import ENABLE_STATIC_ANALYSIS, ENABLE_LLM_REVIEW
-from sentinel_ai.gh_auth import verify_webhook_signature, get_installation_id, get_installation_token
-from sentinel_ai.scanners import scan_file
+from sentinel_ai.config import ENABLE_LLM_REVIEW, ENABLE_STATIC_ANALYSIS
+from sentinel_ai.gh_auth import (
+    get_installation_id,
+    get_installation_token,
+    verify_webhook_signature,
+)
 from sentinel_ai.llm_reviewer import review_code_with_llm
+from sentinel_ai.scanners import scan_file
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,13 +42,13 @@ class Finding(BaseModel):
 
 class ReviewResult(BaseModel):
     pull_number: int
-    findings: List[Finding]
+    findings: list[Finding]
     summary: str
 
 
 # ── GitHub API Helpers ───────────────────────────────────────
 
-async def github_request(method: str, url: str, token: str, data: Optional[dict] = None) -> Optional[Any]:
+async def github_request(method: str, url: str, token: str, data: dict | None = None) -> Any | None:
     """Make an authenticated GitHub API request."""
     import httpx
     headers = {
@@ -59,7 +63,7 @@ async def github_request(method: str, url: str, token: str, data: Optional[dict]
             resp = await client.post(url, headers=headers, json=data)
         else:
             return None
-        
+
         if resp.status_code in (200, 201):
             return resp.json()
         else:
@@ -67,7 +71,7 @@ async def github_request(method: str, url: str, token: str, data: Optional[dict]
             return None
 
 
-async def get_pr_files(owner: str, repo: str, pull_number: int, token: str) -> List[Dict[str, Any]]:
+async def get_pr_files(owner: str, repo: str, pull_number: int, token: str) -> list[dict[str, Any]]:
     """Get list of files changed in a PR."""
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}/files"
     result = await github_request("GET", url, token)
@@ -88,10 +92,10 @@ async def get_file_content(owner: str, repo: str, path: str, ref: str, token: st
 
 async def post_review(
     owner: str, repo: str, pull_number: int,
-    commit_sha: str, findings: List[Finding], token: str
+    commit_sha: str, findings: list[Finding], token: str
 ) -> bool:
     """Post inline review comments using GitHub Review API.
-    
+
     This is the proper way to review PRs — each finding gets an inline
     comment on the specific line, not a single summary comment.
     """
@@ -107,7 +111,7 @@ async def post_review(
         return result is not None
 
     # Group findings by filename
-    by_file: Dict[str, List[Finding]] = {}
+    by_file: dict[str, list[Finding]] = {}
     for f in findings:
         by_file.setdefault(f.filename, []).append(f)
 
@@ -184,7 +188,7 @@ async def process_pull_request(owner: str, repo: str, pull_number: int, commit_s
         logger.warning(f"No files found in PR #{pull_number}")
         return
 
-    all_findings: List[Finding] = []
+    all_findings: list[Finding] = []
 
     for file_data in files:
         filename = file_data["filename"]
@@ -242,7 +246,7 @@ async def github_webhook(request: Request, background_tasks: BackgroundTasks):
     """Handle GitHub webhook events."""
     signature = request.headers.get("X-Hub-Signature-256", "")
     body = await request.body()
-    
+
     if not verify_webhook_signature(body, signature):
         raise HTTPException(status_code=401, detail="Invalid signature")
 

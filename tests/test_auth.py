@@ -1,7 +1,6 @@
 """Tests for Sentinel AI GitHub authentication."""
 
 import os
-import pytest
 
 # Set test env before importing
 os.environ["GH_APP_ID"] = "12345"
@@ -20,8 +19,8 @@ class TestWebhookVerification:
         assert not verify_webhook_signature(payload, signature)
 
     def test_accepts_valid_signature(self):
-        import hmac
         import hashlib
+        import hmac
         payload = b'{"test": "data"}'
         expected = "sha256=" + hmac.new(
             b"testsecret", payload, hashlib.sha256
@@ -29,8 +28,8 @@ class TestWebhookVerification:
         assert verify_webhook_signature(payload, expected)
 
     def test_rejects_tampered_payload(self):
-        import hmac
         import hashlib
+        import hmac
         payload = b'{"test": "data"}'
         signature = "sha256=" + hmac.new(
             b"testsecret", payload, hashlib.sha256

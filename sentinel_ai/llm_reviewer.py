@@ -2,9 +2,14 @@
 
 import json
 import logging
-from typing import List, Dict, Any, Optional
+from typing import Any
 
-from sentinel_ai.config import OPENROUTER_API_KEY, OPENROUTER_MODEL, OLLAMA_BASE_URL, ENABLE_LLM_REVIEW
+from sentinel_ai.config import (
+    ENABLE_LLM_REVIEW,
+    OLLAMA_BASE_URL,
+    OPENROUTER_API_KEY,
+    OPENROUTER_MODEL,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +48,7 @@ Return JSON: {{"findings": [...]}}
 """
 
 
-async def review_code_with_llm(diff: str, filename: str, context: str = "") -> List[Dict[str, Any]]:
+async def review_code_with_llm(diff: str, filename: str, context: str = "") -> list[dict[str, Any]]:
     """Use LLM to review code and return findings (async version)."""
     if not ENABLE_LLM_REVIEW:
         return []
@@ -81,7 +86,7 @@ async def review_code_with_llm(diff: str, filename: str, context: str = "") -> L
         content = response.choices[0].message.content
         if not content:
             return []
-        
+
         # Parse JSON response
         try:
             data = json.loads(content)
@@ -104,12 +109,12 @@ async def review_code_with_llm(diff: str, filename: str, context: str = "") -> L
         return []
 
 
-def review_code_with_llm_sync(diff: str, filename: str, context: str = "") -> List[Dict[str, Any]]:
+def review_code_with_llm_sync(diff: str, filename: str, context: str = "") -> list[dict[str, Any]]:
     """Synchronous wrapper for LLM review (for non-async contexts)."""
     import asyncio
     try:
-        loop = asyncio.get_running_loop()
-        # We're in an async context, create a task
+        asyncio.get_running_loop()
+        # We're in an async context, run in a thread
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as pool:
             future = pool.submit(asyncio.run, review_code_with_llm(diff, filename, context))

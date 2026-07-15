@@ -1,15 +1,19 @@
 """Database models for Sentinel AI findings and reviews."""
 
-from datetime import datetime
-from typing import Optional, List
-import json
+from datetime import datetime, timezone
 
 from sqlalchemy import (
-    create_engine, Column, Integer, String, Text, DateTime,
-    Float, Boolean, ForeignKey, Index
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    create_engine,
+    func,
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-from sqlalchemy import func
 
 from sentinel_ai.config import DATABASE_URL
 
@@ -31,7 +35,7 @@ class Review(Base):
     high_count = Column(Integer, default=0)
     medium_count = Column(Integer, default=0)
     low_count = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
     error_message = Column(Text, nullable=True)
 
@@ -75,7 +79,7 @@ class Finding(Base):
     description = Column(Text, nullable=False)
     suggestion = Column(Text, nullable=True)
     tool = Column(String(50), nullable=False)  # bandit, flake8, semgrep, llm
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     review = relationship("Review", back_populates="findings")
 
@@ -159,15 +163,15 @@ def add_finding(review_id: int, filename: str, line: int, severity: str,
     return finding
 
 
-def complete_review(review_id: int, error: Optional[str] = None):
+def complete_review(review_id: int, error: str | None = None):
     """Mark a review as completed."""
     session = get_session()
     review = session.query(Review).filter_by(id=review_id).first()
     if review:
         review.status = "error" if error else "completed"
-        review.completed_at = datetime.utcnow()
+        review.completed_at = datetime.now(timezone.utc)
         review.error_message = error
-        
+
         # Count findings by severity
         findings = session.query(Finding).filter_by(review_id=review_id).all()
         review.total_findings = len(findings)
@@ -175,11 +179,11 @@ def complete_review(review_id: int, error: Optional[str] = None):
         review.high_count = sum(1 for f in findings if f.severity == "high")
         review.medium_count = sum(1 for f in findings if f.severity == "medium")
         review.low_count = sum(1 for f in findings if f.severity in ("low", "info"))
-        
+
         session.commit()
 
 
-def get_recent_reviews(limit: int = 50) -> List[dict]:
+def get_recent_reviews(limit: int = 50) -> list[dict]:
     """Get recent reviews."""
     session = get_session()
     reviews = session.query(Review).order_by(Review.created_at.desc()).limit(limit).all()
@@ -191,19 +195,19 @@ def get_review_stats() -> dict:
     session = get_session()
     total_reviews = session.query(func.count(Review.id)).filter(Review.status == "completed").scalar()
     total_findings = session.query(func.count(Finding.id)).scalar()
-    
+
     severity_counts = dict(
         session.query(Finding.severity, func.count(Finding.id))
         .group_by(Finding.severity)
         .all()
     )
-    
+
     tool_counts = dict(
         session.query(Finding.tool, func.count(Finding.id))
         .group_by(Finding.tool)
         .all()
     )
-    
+
     return {
         "total_reviews": total_reviews,
         "total_findings": total_findings,

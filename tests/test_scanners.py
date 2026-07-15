@@ -1,13 +1,18 @@
 """Tests for Sentinel AI scanners."""
 
+import shutil
+
 import pytest
-from sentinel_ai.scanners import scan_file, run_bandit, run_flake8, run_semgrep
+
+from sentinel_ai.scanners import run_bandit, run_flake8, run_semgrep, scan_file
 
 
 class TestBanditScanner:
     """Tests for bandit security scanner."""
 
     def test_detects_command_injection(self):
+        if not shutil.which("bandit"):
+            pytest.skip("bandit not installed")
         code = """
 import os
 cmd = "ls " + user_input
@@ -15,9 +20,17 @@ os.system(cmd)
 """
         findings = run_bandit(code)
         assert any(f["tool"] == "bandit" for f in findings)
-        assert any("command" in f.get("message", "").lower() or "injection" in f.get("message", "").lower() for f in findings if f["tool"] == "bandit")
+        assert any(
+            "command" in f.get("message", "").lower()
+            or "injection" in f.get("message", "").lower()
+            or f.get("test_id") == "B605"
+            for f in findings
+            if f["tool"] == "bandit"
+        )
 
     def test_detects_sql_injection(self):
+        if not shutil.which("bandit"):
+            pytest.skip("bandit not installed")
         code = """
 import sqlite3
 def get_user(username):
@@ -30,6 +43,8 @@ def get_user(username):
         assert any(f["tool"] == "bandit" for f in findings)
 
     def test_clean_code_no_findings(self):
+        if not shutil.which("bandit"):
+            pytest.skip("bandit not installed")
         code = """
 def add(a, b):
     return a + b
@@ -48,6 +63,8 @@ class TestFlake8Scanner:
     """Tests for flake8 quality scanner."""
 
     def test_detects_syntax_issues(self):
+        if not shutil.which("flake8"):
+            pytest.skip("flake8 not installed")
         code = """
 def foo( ):
   x=1
@@ -57,6 +74,8 @@ def foo( ):
         assert isinstance(findings, list)
 
     def test_clean_code(self):
+        if not shutil.which("flake8"):
+            pytest.skip("flake8 not installed")
         code = """def foo():
     return 1
 """
@@ -72,7 +91,7 @@ class TestSemgrepScanner:
         import shutil
         if not shutil.which("semgrep"):
             pytest.skip("semgrep not installed")
-        
+
         code = """
 import os
 os.system(user_input)
